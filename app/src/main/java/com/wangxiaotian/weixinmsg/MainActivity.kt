@@ -62,29 +62,24 @@ class MainActivity : AppCompatActivity() {
 
         //val secureID = encode(SecureID().toString().reversed()).reversed() //取由机器码算出的序列号
         val MachineID = MachineID()
-        val timeStamp = System.currentTimeMillis()  //获取当前时间戳
+        var timeStamp = System.currentTimeMillis()  //获取当前时间戳
         println( "----------------------")
         println( MachineID )
         println( timeStamp )
-        val SecureID = encode(MachineID.toString().reversed()+ timeStamp.toString().reversed()).reversed()
+        var SecureID = encode(MachineID.toString().reversed()+ timeStamp.toString().reversed()).reversed()
 
 
         doAsync {
+            timeStamp = System.currentTimeMillis()
+            SecureID = encode(MachineID.toString().reversed()+ timeStamp.toString().reversed()).reversed()
+            //val json = URL("http://weixin.wangxiaotian.com:8080/recentMsg").readText()
             val postjson="{\"MachineId\":\""+MachineID+"\",\"timeStamp\":\""+timeStamp + "\",\"secureID\":\""+SecureID+"\"}"
             println( postjson )
-            //val json = URL("http://weixin.wangxiaotian.com:8080/recentMsg").readText()
             val json = HttpUtil.httpPost( "http://weixin.wangxiaotian.com:8080/recentMsg", postjson, "utf-8" )
             uiThread { json2Msg(json) }
         }
 
-
-
         copy2Clipboard( this, MachineID)
-
-
-
-
-
 
 /*        val map = HashMap<String, Any>()
         map.put("text", "☎【平安医药叶寅团队】正海生物（300653）2017年报电话会邀请！   公司是生物再生材料领域稀缺标的，一季度业绩大幅超预期（+160%~+190%），我们持续重点覆盖和跟踪，后续空间巨大，建议积极关注！   会议时间：2018年4月2日（周一）上午10:00 出席领导：董秘 陆总 接入号码：025-68673555 会议室号：9880 参会密码：7496 [玫瑰]欢迎咨询 叶寅15618967386、韩盟盟18521517741 [玫瑰]平安医药团队：叶寅、魏巍、倪亦道、张熙、韩盟盟" )
@@ -113,11 +108,11 @@ class MainActivity : AppCompatActivity() {
             Snackbar.make(view, getResources().getString (R.string.str_freshing), Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
             doAsync {
-                val json = URL("http://weixin.wangxiaotian.com:8080/recentMsg").readText()
-
-//                val postjson="{\"keyword\":\"隆基\"}"
-//                val json = HttpUtil.httpPost( "http://weixin.wangxiaotian.com:8080/searchMsg", postjson, "utf-8" )
-//                println( json )
+                timeStamp = System.currentTimeMillis()
+                SecureID = encode(MachineID.toString().reversed()+ timeStamp.toString().reversed()).reversed()
+                val postjson="{\"MachineId\":\""+MachineID+"\",\"timeStamp\":\""+timeStamp + "\",\"secureID\":\""+SecureID+"\"}"
+                println( postjson )
+                val json = HttpUtil.httpPost( "http://weixin.wangxiaotian.com:8080/recentMsg", postjson, "utf-8" )
                 uiThread { json2Msg(json) }
             }
 
@@ -131,8 +126,10 @@ class MainActivity : AppCompatActivity() {
                     .setAction("Action", null).show()
             doAsync {
                 //val json = URL("http://weixin.wangxiaotian.com:8080/recentMsg").readText()
-
-                val postjson="{\"keyword\":\""+keyword.text+"\"}"
+                timeStamp = System.currentTimeMillis()
+                SecureID = encode(MachineID.toString().reversed()+ timeStamp.toString().reversed()).reversed()
+                val postjson="{\"MachineId\":\""+MachineID+"\",\"timeStamp\":\""+timeStamp + "\",\"secureID\":\""+SecureID+"\",\"keyword\":\""+keyword.text+"\"}"
+                //val postjson="{\"keyword\":\""+keyword.text+"\"}"
                 val json = HttpUtil.httpPost( "http://weixin.wangxiaotian.com:8080/searchMsg", postjson, "utf-8" )
                 println( json )
                 uiThread { json2Msg(json) }
@@ -190,15 +187,19 @@ class MainActivity : AppCompatActivity() {
         return screenHeight * 2 / 3 > rect.bottom
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
+    @SuppressLint("MissingPermission")
     private fun MachineID() : String? {
         val Android_ID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)
         println( "Android_ID:"+ Android_ID)
-
-        var wm = android.provider.Settings.Secure.getString(this.getContentResolver(), "bluetooth_address").replace(":","")
-        if( wm == null)
-        {
+        var wm=""
+        try {
+             wm = android.provider.Settings.Secure.getString(this.getContentResolver(), "bluetooth_address").replace(":", "")
+        }
+        catch (e: Exception) {
             wm = "123456789012345"
         }
+
         println( "WIFI:"+ wm )
 
         val iMei = NetUtils(this)
@@ -498,12 +499,14 @@ class NetUtils(val context: Context) {
     /**
      * 手机串号
      */
-    val IMEI: String? get() = TELEPHONY_MANAGER.deviceId
+    val IMEI: String? @SuppressLint("MissingPermission")
+    get() = TELEPHONY_MANAGER.deviceId
 
     /**
      * 国际移动用户标识码
      */
-    val IMSI: String? get() = TELEPHONY_MANAGER.subscriberId
+    val IMSI: String? @SuppressLint("MissingPermission")
+    get() = TELEPHONY_MANAGER.subscriberId
 
 
 
